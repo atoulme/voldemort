@@ -57,25 +57,4 @@ public class AvroGenericSerializerTest extends TestCase {
         byte[] bytes = serializer.toBytes(record);
         assertTrue(serializer.toObject(bytes).equals(record));
     }
-
-    // does not work yet.
-    // public void testRoundtripAvroWithSpecificRecord() {
-    //
-    // String jsonSchema =
-    // "{\"name\": \"Java type\", \"type\": \"java.util.HashMap\"}";
-    //
-    // AvroSerializer serializer = new AvroSerializer(jsonSchema);
-    // byte[] bytes = serializer.toBytes(new HashMap());
-    // assertTrue(serializer.toObject(bytes).equals(new HashMap()));
-    // }
-
-    // looks like there is a gotcha: we need to use Utf8 for strings.
-    // private class OurRecord {
-    //
-    // private String name;
-    //
-    // public OurRecord(String name) {
-    // this.name = name;
-    // }
-    // }
 }

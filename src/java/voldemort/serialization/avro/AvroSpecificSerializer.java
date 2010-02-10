@@ -25,6 +25,7 @@ import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificData;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.commons.lang.StringUtils;
 
 import voldemort.serialization.SerializationException;
 import voldemort.serialization.Serializer;
@@ -36,19 +37,43 @@ import voldemort.serialization.avro.AvroGenericSerializer.SeekableByteArrayInput
  */
 public class AvroSpecificSerializer implements Serializer<Object> {
 
+    private static final String ONLY_JAVA_CLIENTS_SUPPORTED = "Only Java clients are supported currently, so the format of the schema-info should be: <schema-info>java=foo.Bar</schema-info> where foo.Bar is the fully qualified name of the message.";
+
     private final Class clazz;
 
     /**
-     * Constructor accepting the schema definition as a JSON string.
+     * Constructor accepting a Java class name under the convention
+     * java=classname.
      * 
-     * @param className a class name.
+     * @param schemaInfo information on the schema for the serializer.
      */
-    public AvroSpecificSerializer(String className) {
+    public AvroSpecificSerializer(String schemaInfo) {
         try {
-            clazz = Class.forName(className);
+            clazz = Class.forName(getJavaClassForDatum(schemaInfo));
         } catch(ClassNotFoundException e) {
             throw new SerializationException(e);
         }
+    }
+
+    /**
+     * Extracts the java class name from the schema info
+     * 
+     * @param schemaInfo the schema info, a string like: java=java.lang.String
+     * @return the name of the class extracted from the schema info
+     */
+    private String getJavaClassForDatum(String schemaInfo) {
+        if(StringUtils.isEmpty(schemaInfo))
+            throw new IllegalArgumentException("The type avro-specific requires a non-empty schema-info.");
+
+        String[] languagePairs = StringUtils.split(schemaInfo, ',');
+        if(languagePairs.length > 1)
+            throw new IllegalArgumentException(ONLY_JAVA_CLIENTS_SUPPORTED);
+
+        String[] javaPair = StringUtils.split(languagePairs[0], '=');
+        if(javaPair.length != 2 || !javaPair[0].trim().equals("java"))
+            throw new IllegalArgumentException(ONLY_JAVA_CLIENTS_SUPPORTED);
+
+        return javaPair[1].trim();
     }
 
     public byte[] toBytes(Object object) {

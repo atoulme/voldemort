@@ -29,10 +29,19 @@ import org.apache.avro.util.Utf8;
  */
 public class AvroSpecificSerializerTest extends TestCase {
 
+    public void testFailWithInvalidSchemaInfo() {
+        try {
+            new AvroSpecificSerializer("ruby=Map");
+        } catch(Exception e) {
+            return;
+        }
+        fail("It should have failed with invalid schema info");
+    }
+
     // We use a generated class for the exercise.
     public void testRoundtripAvroWithHandShakeRequest() {
 
-        String className = "org.apache.avro.ipc.HandshakeRequest";
+        String className = "java=org.apache.avro.ipc.HandshakeRequest";
 
         HandshakeRequest req = new HandshakeRequest();
         // set a few values to avoid NPEs
