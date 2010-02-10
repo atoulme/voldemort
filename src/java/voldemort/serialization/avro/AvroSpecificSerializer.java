@@ -15,47 +15,51 @@
  */
 package voldemort.serialization.avro;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.DataFileWriter;
-import org.apache.avro.file.SeekableInput;
-import org.apache.avro.generic.GenericDatumReader;
-import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
+import org.apache.avro.specific.SpecificData;
+import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificDatumWriter;
 
 import voldemort.serialization.SerializationException;
 import voldemort.serialization.Serializer;
+import voldemort.serialization.avro.AvroGenericSerializer.SeekableByteArrayInput;
 
 /**
- * AvroSerializer uses the avro protocol to serialize objects
- * 
+ * Avro serializer uses the avro protocol to serialize objects of a particular
+ * class type.
  */
-public class AvroGenericSerializer implements Serializer<Object> {
+public class AvroSpecificSerializer implements Serializer<Object> {
 
-    private final Schema typeDef;
+    private final Class clazz;
 
     /**
      * Constructor accepting the schema definition as a JSON string.
      * 
-     * @param schema a serialized JSON object representing a Avro schema.
+     * @param className a class name.
      */
-    public AvroGenericSerializer(String schema) {
-        typeDef = Schema.parse(schema);
+    public AvroSpecificSerializer(String className) {
+        try {
+            clazz = Class.forName(className);
+        } catch(ClassNotFoundException e) {
+            throw new SerializationException(e);
+        }
     }
 
     public byte[] toBytes(Object object) {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         DataFileWriter<Object> writer = null;
         try {
-            Schema schema = typeDef;
-            DatumWriter<Object> datumWriter = new GenericDatumWriter<Object>(typeDef);
+            DatumWriter<Object> datumWriter = new SpecificDatumWriter(clazz);
 
-            writer = new DataFileWriter<Object>(schema, output, datumWriter);
+            writer = new DataFileWriter<Object>(SpecificData.get().getSchema(clazz),
+                                                output,
+                                                datumWriter);
             writer.append(object);
             writer.flush();
             return output.toByteArray();
@@ -74,7 +78,8 @@ public class AvroGenericSerializer implements Serializer<Object> {
         SeekableByteArrayInput input = new SeekableByteArrayInput(bytes);
         DataFileReader<Object> reader = null;
         try {
-            DatumReader<Object> datumReader = new GenericDatumReader<Object>(typeDef);
+            DatumReader<Object> datumReader = null;
+            datumReader = new SpecificDatumReader(clazz);
             reader = new DataFileReader<Object>(input, datumReader);
             return reader.next(null);
         } catch(IOException e) {
@@ -87,30 +92,4 @@ public class AvroGenericSerializer implements Serializer<Object> {
             }
         }
     }
-
-    /**
-     * A simple implementation of the SeekableInput for a ByteArrayInputStream.
-     * 
-     * @author antoine
-     */
-    static class SeekableByteArrayInput extends ByteArrayInputStream implements SeekableInput {
-
-        public SeekableByteArrayInput(byte[] buf) {
-            super(buf);
-        }
-
-        public long length() throws IOException {
-            return buf.length;
-        }
-
-        public void seek(long p) throws IOException {
-            pos = (int) p;
-        }
-
-        public long tell() throws IOException {
-            return (long) pos;
-        }
-
-    }
-
 }
