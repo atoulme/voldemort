@@ -22,9 +22,9 @@ import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
+import org.apache.avro.reflect.ReflectDatumReader;
+import org.apache.avro.reflect.ReflectDatumWriter;
 import org.apache.avro.specific.SpecificData;
-import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.avro.specific.SpecificDatumWriter;
 
 import voldemort.serialization.SerializationException;
 import voldemort.serialization.SerializationUtils;
@@ -33,9 +33,14 @@ import voldemort.serialization.avro.AvroGenericSerializer.SeekableByteArrayInput
 
 /**
  * Avro serializer uses the avro protocol to serialize objects of a particular
- * class type.
+ * class type using reflexivity.
+ * 
+ * Reflexivity is supported from either the class, the schema or both.
+ * 
+ * For now we only support the class case, the code should be stress-tested once
+ * Avro 1.3 is out.
  */
-public class AvroSpecificSerializer implements Serializer<Object> {
+public class AvroReflectiveSerializer implements Serializer<Object> {
 
     private final Class clazz;
 
@@ -45,7 +50,7 @@ public class AvroSpecificSerializer implements Serializer<Object> {
      * 
      * @param schemaInfo information on the schema for the serializer.
      */
-    public AvroSpecificSerializer(String schemaInfo) {
+    public AvroReflectiveSerializer(String schemaInfo) {
         try {
             clazz = Class.forName(SerializationUtils.getJavaClassFromSchemaInfo(schemaInfo));
         } catch(ClassNotFoundException e) {
@@ -57,7 +62,7 @@ public class AvroSpecificSerializer implements Serializer<Object> {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         DataFileWriter<Object> writer = null;
         try {
-            DatumWriter<Object> datumWriter = new SpecificDatumWriter(clazz);
+            DatumWriter<Object> datumWriter = new ReflectDatumWriter(clazz);
 
             writer = new DataFileWriter<Object>(SpecificData.get().getSchema(clazz),
                                                 output,
@@ -80,7 +85,7 @@ public class AvroSpecificSerializer implements Serializer<Object> {
         SeekableByteArrayInput input = new SeekableByteArrayInput(bytes);
         DataFileReader<Object> reader = null;
         try {
-            DatumReader<Object> datumReader = new SpecificDatumReader(clazz);
+            DatumReader<Object> datumReader = new ReflectDatumReader(clazz);
             reader = new DataFileReader<Object>(input, datumReader);
             return reader.next(null);
         } catch(IOException e) {

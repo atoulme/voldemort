@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import voldemort.serialization.avro.AvroGenericSerializer;
+import voldemort.serialization.avro.AvroReflectiveSerializer;
 import voldemort.serialization.avro.AvroSpecificSerializer;
 import voldemort.serialization.json.JsonTypeDefinition;
 import voldemort.serialization.json.JsonTypeSerializer;
@@ -46,6 +47,7 @@ public class DefaultSerializerFactory implements SerializerFactory {
     private static final String THRIFT_TYPE_NAME = "thrift";
     private static final String AVRO_GENERIC_TYPE_NAME = "avro-generic";
     private static final String AVRO_SPECIFIC_TYPE_NAME = "avro-specific";
+    private static final String AVRO_REFLECTIVE_TYPE_NAME = "avro-reflective";
 
     public Serializer<?> getSerializer(SerializerDefinition serializerDef) {
         String name = serializerDef.getName();
@@ -70,6 +72,8 @@ public class DefaultSerializerFactory implements SerializerFactory {
             return new AvroGenericSerializer(serializerDef.getCurrentSchemaInfo());
         } else if(name.equals(AVRO_SPECIFIC_TYPE_NAME)) {
             return new AvroSpecificSerializer(serializerDef.getCurrentSchemaInfo());
+        } else if(name.equals(AVRO_REFLECTIVE_TYPE_NAME)) {
+            return new AvroReflectiveSerializer(serializerDef.getCurrentSchemaInfo());
         } else {
             throw new IllegalArgumentException("No known serializer type: "
                                                + serializerDef.getName());
