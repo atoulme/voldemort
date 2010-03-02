@@ -22,9 +22,9 @@ import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
+import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.reflect.ReflectDatumReader;
 import org.apache.avro.reflect.ReflectDatumWriter;
-import org.apache.avro.specific.SpecificData;
 
 import voldemort.serialization.SerializationException;
 import voldemort.serialization.SerializationUtils;
@@ -62,11 +62,11 @@ public class AvroReflectiveSerializer implements Serializer<Object> {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         DataFileWriter<Object> writer = null;
         try {
-            DatumWriter<Object> datumWriter = new ReflectDatumWriter(clazz);
+            DatumWriter<Object> datumWriter = new ReflectDatumWriter<Object>(clazz);
 
-            writer = new DataFileWriter<Object>(SpecificData.get().getSchema(clazz),
-                                                output,
-                                                datumWriter);
+            writer = new DataFileWriter<Object>(datumWriter).create(ReflectData.get()
+                                                                               .getSchema(clazz),
+                                                                    output);
             writer.append(object);
             writer.flush();
             return output.toByteArray();

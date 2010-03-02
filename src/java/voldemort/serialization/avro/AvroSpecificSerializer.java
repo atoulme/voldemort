@@ -59,9 +59,9 @@ public class AvroSpecificSerializer implements Serializer<Object> {
         try {
             DatumWriter<Object> datumWriter = new SpecificDatumWriter(clazz);
 
-            writer = new DataFileWriter<Object>(SpecificData.get().getSchema(clazz),
-                                                output,
-                                                datumWriter);
+            writer = new DataFileWriter<Object>(datumWriter).create(SpecificData.get()
+                                                                                .getSchema(clazz),
+                                                                    output);
             writer.append(object);
             writer.flush();
             return output.toByteArray();

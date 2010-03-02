@@ -36,13 +36,12 @@ public class AvroGenericSerializerTest extends TestCase {
         assertTrue(serializer.toObject(bytes).equals("BAR"));
     }
 
-    // this fails with 1.2 but works with the current Avro trunk.
-    // public void testRoundtripAvroWithString() throws Exception {
-    // String jsonSchema = "{\"name\": \"Str\", \"type\": \"String\"}";
-    // AvroGenericSerializer serializer = new AvroGenericSerializer(jsonSchema);
-    // byte[] bytes = serializer.toBytes("BAR");
-    // assertTrue(serializer.toObject(bytes).equals("BAR"));
-    // }
+    public void testRoundtripAvroWithString() throws Exception {
+        String jsonSchema = "{\"name\": \"Str\", \"type\": \"string\"}";
+        AvroGenericSerializer serializer = new AvroGenericSerializer(jsonSchema);
+        byte[] bytes = serializer.toBytes(new Utf8("BAR"));
+        assertTrue(serializer.toObject(bytes).equals(new Utf8("BAR")));
+    }
 
     public void testRoundtripAvroWithGenericRecord() throws Exception {
         String jsonSchema = "{\"name\": \"Compact Disk\", \"type\": \"record\", "

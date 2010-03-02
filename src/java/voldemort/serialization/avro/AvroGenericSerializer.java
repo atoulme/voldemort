@@ -52,10 +52,9 @@ public class AvroGenericSerializer implements Serializer<Object> {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         DataFileWriter<Object> writer = null;
         try {
-            Schema schema = typeDef;
             DatumWriter<Object> datumWriter = new GenericDatumWriter<Object>(typeDef);
 
-            writer = new DataFileWriter<Object>(schema, output, datumWriter);
+            writer = new DataFileWriter<Object>(datumWriter).create(typeDef, output);
             writer.append(object);
             writer.flush();
             return output.toByteArray();
@@ -108,7 +107,7 @@ public class AvroGenericSerializer implements Serializer<Object> {
         }
 
         public long tell() throws IOException {
-            return (long) pos;
+            return pos;
         }
 
     }
